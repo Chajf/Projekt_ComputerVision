@@ -11,9 +11,15 @@ library(tidyverse)
 library(keras)
 ```
 
+## Tematyka zadania
+
+Celem tego projektu jest zbudowanie modelu konwolucyjnej sieci neuronowej służącej do klasyfikacji dzieł sztuki ze względu na gatunek (11 etykiet) oraz stylów malarskich (27 etykiet).
+
+Zbiór danych którym posłużyliśmy się do trenowania modeli jest WikiArt zawierający ponad 84 tysiące różnych obrazów. Zbiór ten funkcjonuje w otwartym dostępie i jest darmowy do niekomercyjnego użytku.
+
 ## Pierwsza sieć
 
-Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta
+Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta ponieważ składa się jedynie z 4 warstw konwolucyjnych i max poolingowych ze stosunkowo niewielką ilością filtrów.
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -43,6 +49,8 @@ Widać że nastąpiło zjawisko przeuczenia.
 
 ## Drugi projekt sieci
 
+Druga architektura składa się z większej liczby warstw konwolucyjnych oraz większej ilości filtrów. Dodatkowo tym razem dodaliśmy warstwy dropout'ów w celu redukcji przeuczenia sieci.
+
 ```{r}
 model <- keras_model_sequential() %>%
   layer_conv_2d(filters = 128, kernel_size = c(3, 3), activation = "relu",
@@ -67,3 +75,37 @@ model <- keras_model_sequential() %>%
 model
 ```
 
+Uczenie tym razem odbywało się na 51 200 obrazach w epoce, a następnie model walidowany był na 12 800 obrazach.
+
+![Druga siec](plot_nn_2.png)
+
+Niestety także i przy tej architekturze nastąpiło zjawisko przeuczenia (nawet szybciej niż w przypadku sieci poprzedniej) osiągając accuracy maksymalnie na poziomie 0.45.
+
+## Trzeci projekt sieci
+
+Tym razem zdecydowaliśmy się użyć wcześniej przeszkolonej sieci ResNet jako części konwolucyjnej. Ze względu na ograniczone zasoby obliczeniowe użyliśmy wersji ResNet50.
+
+```{r}
+conv_base <- application_resnet50(
+  weights = "imagenet",
+  include_top = F,
+  input_shape = c(224,224,3)
+)
+```
+
+```{r}
+freeze_weights(conv_base)
+unfreeze_weights(conv_base, from = "conv5_block3_2_conv")
+```
+
+Odmrażamy dwa ostatnie bloki konwolucyjne i normalizujące partię w celu dostrojenia sieci do naszego zadania.
+
+```{r}
+model <- keras_model_sequential() %>%
+  conv_base %>%
+  layer_flatten() %>%
+  layer_dense(units = 512, activation = "relu") %>%
+  layer_dense(units = 11, activation = "softmax")
+
+model
+```
