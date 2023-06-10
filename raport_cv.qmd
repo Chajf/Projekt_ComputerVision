@@ -17,7 +17,33 @@ Celem tego projektu jest zbudowanie modelu konwolucyjnej sieci neuronowej służ
 
 Zbiór danych którym posłużyliśmy się do trenowania modeli jest WikiArt zawierający ponad 84 tysiące różnych obrazów. Zbiór ten funkcjonuje w otwartym dostępie i jest darmowy do niekomercyjnego użytku.
 
-## Pierwsza sieć
+## Klasyfikacja gatunku obrazu
+
+Każdy z obrazów posiada etykietę wskazującą na gatunek obrazu:
+
+-   0 - Malarstwo abstrakcyjne
+
+-   1 - Pejzaż miejski
+
+-   2 - Malarstwo rodzajowe
+
+-   3 - Ilustracja
+
+-   4 - Pejzaż
+
+-   5 - Malarstwo nagie
+
+-   6 - Portret
+
+-   7 - Malarstwo religijne
+
+-   8 - Szkic
+
+-   9 - Martwa natura
+
+-   10 - Gatunek nieznany
+
+### Pierwszy projekt sieci
 
 Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta ponieważ składa się jedynie z 4 warstw konwolucyjnych i max poolingowych ze stosunkowo niewielką ilością filtrów.
 
@@ -41,13 +67,15 @@ model
 
 Szkolenie w każdej epoce odbywało się na 3200 obrazkach oraz była przeprowadzana walidacja na 1600 obrazkach.
 
+Funkcją optymalizującą był "Adam" oraz zastosowane były callbacki wcześniejszego zatrzymania po 5 epokach bez poprawy trafności na zbiorze walidacyjnym oraz na zapisywanie modelu po każdej epoce.
+
 Przy tej strukturze sieć szkoliła się przez 28 epok kończąc proces uczenia przez zastosowanie callbacków ze względu na brak poprawy celności na zbiorze walidacyjnym.
 
 ![Pierwsza siec](plot_nn_1.png)
 
-Widać że nastąpiło zjawisko przeuczenia.
+Widać że nastąpiło zjawisko przeuczenia. Najwyższą celnościa na zbiorze walidacyjnym było \~45%.
 
-## Drugi projekt sieci
+### Drugi projekt sieci
 
 Druga architektura składa się z większej liczby warstw konwolucyjnych oraz większej ilości filtrów. Dodatkowo tym razem dodaliśmy warstwy dropout'ów w celu redukcji przeuczenia sieci.
 
@@ -77,11 +105,13 @@ model
 
 Uczenie tym razem odbywało się na 51 200 obrazach w epoce, a następnie model walidowany był na 12 800 obrazach.
 
+Funkcją optymalizującą również był "Adam" oraz zastosowane były te same callbacki co przy wcześniejszej architekturze.
+
 ![Druga siec](plot_nn_2.png)
 
 Niestety także i przy tej architekturze nastąpiło zjawisko przeuczenia (nawet szybciej niż w przypadku sieci poprzedniej) osiągając accuracy maksymalnie na poziomie 0.45.
 
-## Trzeci projekt sieci
+### Trzeci projekt sieci
 
 Tym razem zdecydowaliśmy się użyć wcześniej przeszkolonej sieci ResNet jako części konwolucyjnej. Ze względu na ograniczone zasoby obliczeniowe użyliśmy wersji ResNet50.
 
@@ -109,3 +139,67 @@ model <- keras_model_sequential() %>%
 
 model
 ```
+
+Sieć uczona była na pełnym zbiorze treningowym przy użyciu optimizera "Adam" i tych samch callbacków co przy poprzednich architekturach.
+
+![Trzecia siec](plot_nn_3.png)
+
+W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprzednich architekturach.
+
+## Klasyfikacja stylu obrazu
+
+-   0 - Abstrakcjonizm ekspresyjny
+
+-   1 - Malowidło akcji
+
+-   2 - Kubizm anlityczny
+
+-   3 - Secesja
+
+-   4 - Barok
+
+-   5 Color_Field_Painting
+
+-   6 Contemporary_Realism
+
+-   7 - Kubizm
+
+-   8 Early_Renaissance
+
+-   9 - Ekspresjonizm
+
+-   10 - Fowizm
+
+-   11 - Późny renesans
+
+-   12 - Impresjonizm
+
+-   13 Mannerism_Late_Renaissance
+
+-   14 - Minimalizm
+
+-   15 Naive_Art_Primitivism
+
+-   16 New_Realism
+
+-   17 Northern_Renaissance
+
+-   18 - Puentylizm
+
+-   19 Pop_Art
+
+-   20 Post_Impressionism
+
+-   21 - Realizm
+
+-   22 - Rokoko
+
+-   23 Romanticism
+
+-   24 - Symbolizm
+
+-   25 Synthetic_Cubism
+
+-   26 Ukiyo_e
+
+-   27 - Styl nieznany
