@@ -6,7 +6,7 @@ format:
 editor: visual
 ---
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
 library(tidyverse)
 library(keras)
 ```
@@ -47,6 +47,10 @@ Każdy z obrazów posiada etykietę wskazującą na gatunek obrazu:
 
 Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta ponieważ składa się jedynie z 4 warstw konwolucyjnych i max poolingowych ze stosunkowo niewielką ilością filtrów.
 
+<details>
+
+<summary>Architektura</summary>
+
 ```{r}
 model <- keras_model_sequential() %>%
   layer_conv_2d(filters = 32, kernel_size = c(3, 3), activation = "relu",
@@ -65,9 +69,19 @@ model <- keras_model_sequential() %>%
 model
 ```
 
+</details>
+
+```{r echo=FALSE}
+model
+```
+
 Szkolenie w każdej epoce odbywało się na 3200 obrazkach oraz była przeprowadzana walidacja na 1600 obrazkach.
 
-Funkcją optymalizującą był "Adam" oraz zastosowane były callbacki wcześniejszego zatrzymania po 5 epokach bez poprawy trafności na zbiorze walidacyjnym oraz na zapisywanie modelu po każdej epoce.
+Funkcją optymalizującą był "Adam" oraz zastosowane były następujące callbacki:
+
+-   Zapisywanie modelu po każdej epoce
+
+-   Przerwanie procesu uczenia jeżeli celność nie poprawi się na zbiorze walidacyjnym po 5 epokach
 
 Przy tej strukturze sieć szkoliła się przez 28 epok kończąc proces uczenia przez zastosowanie callbacków ze względu na brak poprawy celności na zbiorze walidacyjnym.
 
@@ -78,6 +92,10 @@ Widać że nastąpiło zjawisko przeuczenia. Najwyższą celnościa na zbiorze w
 ### Drugi projekt sieci
 
 Druga architektura składa się z większej liczby warstw konwolucyjnych oraz większej ilości filtrów. Dodatkowo tym razem dodaliśmy warstwy dropout'ów w celu redukcji przeuczenia sieci.
+
+<details>
+
+<summary>Architektura</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -100,6 +118,12 @@ model <- keras_model_sequential() %>%
   layer_dropout(rate = 0.5) %>%
   layer_dense(units = 11, activation = "softmax")
 
+model
+```
+
+</details>
+
+```{r echo=FALSE}
 model
 ```
 
@@ -130,6 +154,10 @@ unfreeze_weights(conv_base, from = "conv5_block3_2_conv")
 
 Odmrażamy dwa ostatnie bloki konwolucyjne i normalizujące partię w celu dostrojenia sieci do naszego zadania.
 
+<details>
+
+<summary>Architektura</summary>
+
 ```{r}
 model <- keras_model_sequential() %>%
   conv_base %>%
@@ -140,11 +168,71 @@ model <- keras_model_sequential() %>%
 model
 ```
 
+</details>
+
+```{r echo=FALSE}
+model
+```
+
 Sieć uczona była na pełnym zbiorze treningowym przy użyciu optimizera "Adam" i tych samch callbacków co przy poprzednich architekturach.
 
 ![Trzecia siec](plot_nn_3.png)
 
 W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprzednich architekturach.
+
+### Czwarty projekt sieci
+
+<details>
+
+<summary>Architektura</summary>
+
+```{r}
+model <- keras_model_sequential() %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3),
+                input_shape = c(224, 224, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_dropout(rate = 0.2) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_dropout(rate = 0.3) %>% 
+  layer_conv_2d(filters = 32, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_flatten() %>%
+  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = 512, activation = "relu") %>%
+  layer_activity_regularization(l2 = 0.001) %>% 
+  layer_dense(units = 11, activation = "softmax")
+
+model
+```
+
+</details>
+
+```{r echo=FALSE}
+model
+```
+
+Ze względu na fakt że pierwsza architektura pomimo najprostrzej struktury dawała relatywnie najlepsze wyniki zdecydowaliśmy się do niej wrócić z modyfikacjami w postaci regurlaryzacji oraz funkcji aktywacji w postaci "leaky reLU".
+
+![Czwarta siec](plot_nn_4.png)
+
+Podczas uczenia callbacki ustawione były na:
+
+-   Zapisywanie modelu po każdej epoce
+
+-   Przerwanie procesu uczenia jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 5 epokach
+
+-   Obniżenie learning rate jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 3 epokach
+
+W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej zarówno na zbiorze uczącym (~67% celności) jak i walidacyjnym (~47% celności).
+
+Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać że za pierwszym razem poprawił celność) model jest przeuczony.
 
 ## Klasyfikacja stylu obrazu
 
@@ -203,3 +291,43 @@ W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprz
 -   26 Ukiyo_e
 
 -   27 - Styl nieznany
+
+### Pierwszy projekt sieci
+
+Pierwszą architekturę sieci do rozpoznawania styli malarstwa postanowiliśmy oprzeć o wcześniej wyuczoną sieć ResNet50 z odmrożonymi dwoma blokami konwolucji.
+
+W tym przypadku zdecydowaliśmy się na mniejszy blok gęsty względem architektury do rozpoznawania gatunków.
+
+<details>
+
+<summary>Architektura</summary>
+
+```{r}
+model <- keras_model_sequential() %>%
+  conv_base %>%
+  layer_flatten() %>%
+  layer_dense(units = 256, activation = "relu") %>%
+  layer_dense(units = 27, activation = "softmax")
+
+model
+```
+
+</details>
+
+```{r echo=FALSE}
+model
+```
+
+Podczas uczenia callbacki ustawione były na:
+
+-   Zapisywanie modelu po każdej epoce
+
+-   Przerwanie procesu uczenia jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 8 epokach
+
+-   Obniżenie learning rate jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 4 epokach
+
+Niestety proces uczenia został przerwany ze względu na limity platformy kaggle (kompilacja notatnika osiągnęła 12h) z tego względu dysponujemy jedynie logami dla rezultatów 27 epoki
+
+loss: 2.1323 - acc: 0.3101 - val_loss: 2.2895 - val_acc: 0.2795 - lr: 1.0000e-06
+
+### Drugi projekt sieci
