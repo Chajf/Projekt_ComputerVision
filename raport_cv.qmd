@@ -49,7 +49,7 @@ Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta ponieważ
 
 <details>
 
-<summary>Architektura</summary>
+<summary>Kod</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -65,8 +65,6 @@ model <- keras_model_sequential() %>%
   layer_flatten() %>%
   layer_dense(units = 512, activation = "relu") %>%
   layer_dense(units = 11, activation = "softmax")
-
-model
 ```
 
 </details>
@@ -95,7 +93,7 @@ Druga architektura składa się z większej liczby warstw konwolucyjnych oraz wi
 
 <details>
 
-<summary>Architektura</summary>
+<summary>Kod</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -117,8 +115,6 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 54, activation = "relu") %>%
   layer_dropout(rate = 0.5) %>%
   layer_dense(units = 11, activation = "softmax")
-
-model
 ```
 
 </details>
@@ -156,7 +152,7 @@ Odmrażamy dwa ostatnie bloki konwolucyjne i normalizujące partię w celu dostr
 
 <details>
 
-<summary>Architektura</summary>
+<summary>Kod</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -164,8 +160,6 @@ model <- keras_model_sequential() %>%
   layer_flatten() %>%
   layer_dense(units = 512, activation = "relu") %>%
   layer_dense(units = 11, activation = "softmax")
-
-model
 ```
 
 </details>
@@ -184,7 +178,7 @@ W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprz
 
 <details>
 
-<summary>Architektura</summary>
+<summary>Kod</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -208,8 +202,6 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 512, activation = "relu") %>%
   layer_activity_regularization(l2 = 0.001) %>% 
   layer_dense(units = 11, activation = "softmax")
-
-model
 ```
 
 </details>
@@ -234,6 +226,27 @@ W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej zarówno na
 
 Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać że za pierwszym razem poprawił celność) model jest przeuczony.
 
+### Piąty projekt sieci
+
+Zachęceni wynikami uzyskanymi na stylach z szkolonej od początku architektury DensNet121 postawnowiliśmy użyć jej również do klasyfikacji garunków.
+
+```{r}
+conv_base <- application_densenet121(
+  weights = NULL,
+  include_top = TRUE,
+  classes = 11,
+  input_shape = c(224, 224, 3)
+)
+
+model <- conv_base
+```
+
+![Piata siec](plot_nn_5.png)
+
+Także i w tym przypadku architektura ta okazała się najlepsza z dotychczasowych osiągając blisko 60% na zbiorze walidacyjnym.
+
+### Szósty projekt sieci
+
 ## Klasyfikacja stylu obrazu
 
 -   0 - Abstrakcjonizm ekspresyjny
@@ -246,13 +259,13 @@ Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać 
 
 -   4 - Barok
 
--   5 Color_Field_Painting
+-   5 - Malarstwo barwnych płaszczyzn
 
--   6 Contemporary_Realism
+-   6 - Realizm współczesny
 
 -   7 - Kubizm
 
--   8 Early_Renaissance
+-   8 - Wczesny Renesans
 
 -   9 - Ekspresjonizm
 
@@ -262,33 +275,33 @@ Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać 
 
 -   12 - Impresjonizm
 
--   13 Mannerism_Late_Renaissance
+-   13 - Manieryzm późnego renesansu
 
 -   14 - Minimalizm
 
--   15 Naive_Art_Primitivism
+-   15 - Prymitywizm (Naïve art)
 
--   16 New_Realism
+-   16 - Nowy realizm
 
--   17 Northern_Renaissance
+-   17 - Renesans północny
 
 -   18 - Puentylizm
 
--   19 Pop_Art
+-   19 - Pop-art
 
--   20 Post_Impressionism
+-   20 - Postimpresjonizm
 
 -   21 - Realizm
 
 -   22 - Rokoko
 
--   23 Romanticism
+-   23 - Romantyzm
 
 -   24 - Symbolizm
 
--   25 Synthetic_Cubism
+-   25 - Kubizm syntetyczny
 
--   26 Ukiyo_e
+-   26 - Ukiyo-e
 
 -   27 - Styl nieznany
 
@@ -300,7 +313,7 @@ W tym przypadku zdecydowaliśmy się na mniejszy blok gęsty względem architekt
 
 <details>
 
-<summary>Architektura</summary>
+<summary>Kod</summary>
 
 ```{r}
 model <- keras_model_sequential() %>%
@@ -308,8 +321,6 @@ model <- keras_model_sequential() %>%
   layer_flatten() %>%
   layer_dense(units = 256, activation = "relu") %>%
   layer_dense(units = 27, activation = "softmax")
-
-model
 ```
 
 </details>
@@ -331,3 +342,69 @@ Niestety proces uczenia został przerwany ze względu na limity platformy kaggle
 loss: 2.1323 - acc: 0.3101 - val_loss: 2.2895 - val_acc: 0.2795 - lr: 1.0000e-06
 
 ### Drugi projekt sieci
+
+Jako drugą architekturę sieci postanowiliśmy wykorzystać czwartą architekturę zaproponowaną do klasyfikacji gatunków ze względu na fakt że osiągała ona najlepsze wyniki.
+
+<details>
+
+<summary>Kod</summary>
+
+```{r}
+model <- keras_model_sequential() %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3),
+                input_shape = c(224, 224, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_conv_2d(filters = 128, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_dropout(rate = 0.2) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_dropout(rate = 0.3) %>% 
+  layer_conv_2d(filters = 32, kernel_size = c(3, 3)) %>%
+  layer_activation_leaky_relu(alpha = 0.1) %>% 
+  layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+  layer_flatten() %>%
+  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = 512, activation = "relu") %>%
+  layer_activity_regularization(l2 = 0.001) %>% 
+  layer_dense(units = 27, activation = "softmax")
+```
+
+</details>
+
+```{r echo=FALSE}
+model
+```
+
+
+![Druga siec](plot_nn_style_1.png)
+
+Pomimo faktu, że i przy tej strukturze sieci następuje przeuczenie osiąga ona taki sam wynik na zbiorze uczącym po 3 epokach co struktura oparta na ResNet50 osiągnęła po 27.
+
+### Trzeci projekt sieci
+
+Pomimo faktu że modele które wykorzystywały wcześniej przetrenowaną sieć konwolucyjną ResNet50 okazały się być gorsze nawet od prostych struktur zdecydowaliśmy się użyć nowszej struktury DensNet121 wykorzystującej bardziej zaawansowane połączenia resztowe.
+
+![ResNet vs DensNet](densnet_vs_resnet.png)
+
+Zdecydowaliśmy się na DensNet121 z tego względu iż jest to najmniejsza struktura z architektur DensNet co jest ważne przy ograniczonych zasobach sprzętowych.
+
+Tym razem uznaliśmy jednak, że abstrakcyjny charakter zadania wymaga przeszkolenia całej struktury na nowo, ponieważ wzorce wyuczone na zbiorze "Imagenet" mogą nie dawać zadowalających wyników.
+
+```{r}
+conv_base <- application_densenet121(
+  weights = NULL,
+  include_top = TRUE,
+  classes = 11,
+  input_shape = c(224, 224, 3)
+)
+
+model <- conv_base
+```
+
+![Trzecia siec](plot_nn_style_2.png)
+
+Decyzja ta okazała się być trafiona. Po raz pierwszy udało się osiągnąć celnośc powyżej 50% (~52%).
