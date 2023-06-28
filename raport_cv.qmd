@@ -3,12 +3,15 @@ title: "Projekt_CV"
 format:
   html:
     embed-resources: true
+    toc: true
+    toc-title: Spis treści
 editor: visual
 ---
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 library(tidyverse)
 library(keras)
+library(flextable)
 ```
 
 ## Tematyka zadania
@@ -16,6 +19,10 @@ library(keras)
 Celem tego projektu jest zbudowanie modelu konwolucyjnej sieci neuronowej służącej do klasyfikacji dzieł sztuki ze względu na gatunek (11 etykiet) oraz stylów malarskich (27 etykiet).
 
 Zbiór danych którym posłużyliśmy się do trenowania modeli jest WikiArt zawierający ponad 84 tysiące różnych obrazów. Zbiór ten funkcjonuje w otwartym dostępie i jest darmowy do niekomercyjnego użytku.
+
+Największą trudność zadania stanowi fakt że klasyfikacja obrazów jest zadaniem o charakterze abstrakcyjnym w zestawieniu z klasyfikacją przedmitów, ludzi lub zwirząt.
+
+Dodatkowo specyfika zadania uniemożliwa wykorzystanie augmentacji (dla danego obrazu możliwy jest tylko oryginalny sposób reprezentacji zgodny z projektem artysty).
 
 ## Klasyfikacja gatunku obrazu
 
@@ -73,19 +80,19 @@ model <- keras_model_sequential() %>%
 model
 ```
 
-Szkolenie w każdej epoce odbywało się na 3200 obrazkach oraz była przeprowadzana walidacja na 1600 obrazkach.
+Szkolenie w każdej epoce odbywało się na 3200 obrazkach oraz walidacja była przeprowadzana na 1600 obrazkach.
 
-Funkcją optymalizującą był "Adam" oraz zastosowane były następujące callbacki:
+Funkcją optymalizującą był "Adam" oraz zastosowane zostały następujące callbacki:
 
 -   Zapisywanie modelu po każdej epoce
 
 -   Przerwanie procesu uczenia jeżeli celność nie poprawi się na zbiorze walidacyjnym po 5 epokach
 
-Przy tej strukturze sieć szkoliła się przez 28 epok kończąc proces uczenia przez zastosowanie callbacków ze względu na brak poprawy celności na zbiorze walidacyjnym.
+Przy tej strukturze sieć szkoliła się przez 28 epok, kończąc proces uczenia przez zastosowanie callbacków ze względu na brak poprawy celności na zbiorze walidacyjnym.
 
-![Pierwsza siec](plot_nn_1.png)
+![Pierwsza sieć](plot_nn_1.png)
 
-Widać że nastąpiło zjawisko przeuczenia. Najwyższą celnościa na zbiorze walidacyjnym było \~45%.
+Widać że nastąpiło zjawisko przeuczenia. Najwyższą celnością na zbiorze walidacyjnym było \~45%.
 
 ### Drugi projekt sieci
 
@@ -123,17 +130,19 @@ model <- keras_model_sequential() %>%
 model
 ```
 
-Uczenie tym razem odbywało się na 51 200 obrazach w epoce, a następnie model walidowany był na 12 800 obrazach.
+Uczenie tym razem odbywało się na 51200 obrazach w epoce, a następnie model walidowany był na 12800 obrazach.
 
 Funkcją optymalizującą również był "Adam" oraz zastosowane były te same callbacki co przy wcześniejszej architekturze.
 
-![Druga siec](plot_nn_2.png)
+![Druga sieć](plot_nn_2.png)
 
 Niestety także i przy tej architekturze nastąpiło zjawisko przeuczenia (nawet szybciej niż w przypadku sieci poprzedniej) osiągając accuracy maksymalnie na poziomie 0.45.
 
 ### Trzeci projekt sieci
 
 Tym razem zdecydowaliśmy się użyć wcześniej przeszkolonej sieci ResNet jako części konwolucyjnej. Ze względu na ograniczone zasoby obliczeniowe użyliśmy wersji ResNet50.
+
+ResNet50 to wariant modelu ResNet, który składa się z 48 warstw konwolucyjnych, jednej warstwy MaxPool i jednej warstwy Average Pool. ResNet został zaprojektowany w celu dodawania większej liczby warstw konwolucyjnych do sieci CNN, bez napotkania problemu zanikającego gradientu, za pomocą koncepcji połączeń rezydualnych.
 
 ```{r}
 conv_base <- application_resnet50(
@@ -170,7 +179,7 @@ model
 
 Sieć uczona była na pełnym zbiorze treningowym przy użyciu optimizera "Adam" i tych samch callbacków co przy poprzednich architekturach.
 
-![Trzecia siec](plot_nn_3.png)
+![Trzecia sieć](plot_nn_3.png)
 
 W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprzednich architekturach.
 
@@ -212,7 +221,7 @@ model
 
 Ze względu na fakt że pierwsza architektura pomimo najprostrzej struktury dawała relatywnie najlepsze wyniki zdecydowaliśmy się do niej wrócić z modyfikacjami w postaci regurlaryzacji oraz funkcji aktywacji w postaci "leaky reLU".
 
-![Czwarta siec](plot_nn_4.png)
+![Czwarta sieć](plot_nn_4.png)
 
 Podczas uczenia callbacki ustawione były na:
 
@@ -222,13 +231,19 @@ Podczas uczenia callbacki ustawione były na:
 
 -   Obniżenie learning rate jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 3 epokach
 
-W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej zarówno na zbiorze uczącym (~67% celności) jak i walidacyjnym (~47% celności).
+W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej zarówno na zbiorze uczącym (\~67% celności) jak i walidacyjnym (\~47% celności).
 
 Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać że za pierwszym razem poprawił celność) model jest przeuczony.
 
 ### Piąty projekt sieci
 
-Zachęceni wynikami uzyskanymi na stylach z szkolonej od początku architektury DensNet121 postawnowiliśmy użyć jej również do klasyfikacji garunków.
+Pomimo faktu, że modele które wykorzystywały wcześniej przetrenowaną sieć konwolucyjną ResNet50, okazały się być gorsze nawet od prostych struktur. Zdecydowaliśmy się użyć nowszej struktury DensNet121, wykorzystującej bardziej zaawansowane połączenia resztowe.
+
+![ResNet vs DensNet](densnet_vs_resnet.png)
+
+Zdecydowaliśmy się na DensNet121 z tego względu iż jest to najmniejsza struktura z architektur DensNet co jest ważne przy ograniczonych zasobach sprzętowych.
+
+Tym razem uznaliśmy jednak, że abstrakcyjny charakter zadania wymaga przeszkolenia całej struktury na nowo, ponieważ wzorce wyuczone na zbiorze "Imagenet" mogą nie dawać zadowalających wyników.
 
 ```{r}
 conv_base <- application_densenet121(
@@ -241,11 +256,28 @@ conv_base <- application_densenet121(
 model <- conv_base
 ```
 
-![Piata siec](plot_nn_5.png)
+![Piąta sieć](plot_nn_5.png)
 
-Także i w tym przypadku architektura ta okazała się najlepsza z dotychczasowych osiągając blisko 60% na zbiorze walidacyjnym.
+W tym przypadku architektura ta okazała się być najlepsza z wszystkich dotychczasowych osiągając blisko 60% na zbiorze walidacyjnym.
 
 ### Szósty projekt sieci
+
+W tym podejściu postanowiliśmy zastosować predefiniowaną sieć NASNetMobile ze względu na jej niewielki rozmiar oraz fakt że jak na razie gotowe architektury, uczone od początku (losowo inicjalizowane wagi) dawały najlepsze wyniki.
+
+```{r}
+conv_base <- application_nasnetmobile(
+  weights = NULL,
+  include_top = TRUE,
+  classes = 11,
+  input_shape = c(224, 224, 3)
+)
+
+model <- conv_base
+```
+
+![Szósta siec](plot_nn_6.png)
+
+Wyniki okazały się być nieco gorsze od poprzedniej architektury oparej na DenNet121 poniważ jest to około 55% celności na zbiorze walidacyjnym. Dodatkowo w tym przypadku efekt przeuczenia jest mniejszy niż w poprzedniej architekturze więc daje to potencjał żeby jeszcze ją poprawić.
 
 ## Klasyfikacja stylu obrazu
 
@@ -316,6 +348,12 @@ W tym przypadku zdecydowaliśmy się na mniejszy blok gęsty względem architekt
 <summary>Kod</summary>
 
 ```{r}
+conv_base <- application_resnet50(
+  weights = "imagenet",
+  include_top = F,
+  input_shape = c(224,224,3)
+)
+
 model <- keras_model_sequential() %>%
   conv_base %>%
   layer_flatten() %>%
@@ -379,20 +417,13 @@ model <- keras_model_sequential() %>%
 model
 ```
 
-
-![Druga siec](plot_nn_style_1.png)
+![Druga sieć](plot_nn_style_1.png)
 
 Pomimo faktu, że i przy tej strukturze sieci następuje przeuczenie osiąga ona taki sam wynik na zbiorze uczącym po 3 epokach co struktura oparta na ResNet50 osiągnęła po 27.
 
 ### Trzeci projekt sieci
 
-Pomimo faktu że modele które wykorzystywały wcześniej przetrenowaną sieć konwolucyjną ResNet50 okazały się być gorsze nawet od prostych struktur zdecydowaliśmy się użyć nowszej struktury DensNet121 wykorzystującej bardziej zaawansowane połączenia resztowe.
-
-![ResNet vs DensNet](densnet_vs_resnet.png)
-
-Zdecydowaliśmy się na DensNet121 z tego względu iż jest to najmniejsza struktura z architektur DensNet co jest ważne przy ograniczonych zasobach sprzętowych.
-
-Tym razem uznaliśmy jednak, że abstrakcyjny charakter zadania wymaga przeszkolenia całej struktury na nowo, ponieważ wzorce wyuczone na zbiorze "Imagenet" mogą nie dawać zadowalających wyników.
+Zachęceni wynikami uzyskanymi na gatunkach z szkolonej od początku architektury DensNet121 postawnowiliśmy użyć jej również do klasyfikacji styli.
 
 ```{r}
 conv_base <- application_densenet121(
@@ -405,6 +436,328 @@ conv_base <- application_densenet121(
 model <- conv_base
 ```
 
-![Trzecia siec](plot_nn_style_2.png)
+![Trzecia sieć](plot_nn_style_2.png)
 
-Decyzja ta okazała się być trafiona. Po raz pierwszy udało się osiągnąć celnośc powyżej 50% (~52%).
+Decyzja ta okazała się być trafiona. Po raz pierwszy udało się osiągnąć celnośc powyżej 50% (\~52%).
+
+## Ewaluacja modeli
+
+### Gatunki
+
+```{r echo=FALSE}
+rounded_gatunki <- 3
+
+nazwy_modeli_gatunki <- c("Arch1","Arch2","ResNet50","Arch3","DensNet121","NASNetMobile")
+
+metryki_gatunki_ev <- data.frame("loss"=round(c(1.53479695320129,1.64454686641693,1.69026494026184,1.59458303451538,1.24018633365631,1.2624317407608),rounded_gatunki)
+                                 ,"accuracy"=round(c(0.455780208110809,0.432709008455276,0.42545273900032,0.48319274187088,0.566174626350403,0.564810216426849),rounded_gatunki)
+                                 ,"top3"=round(c(0.78336638212204,0.772699058055878,0.764698565006256,0.772109925746918,0.791863083839417,0.803491711616516),rounded_gatunki)
+                                 ,"top5"=round(c(0.912614762783051,0.904614210128784,0.902939736843109,0.907017469406128,0.916707992553711,0.92246550321579),rounded_gatunki)
+                                 , row.names = nazwy_modeli_gatunki
+                                 )
+```
+
+```{r echo=FALSE}
+# Gatunki
+gatunki_ft <- flextable(metryki_gatunki_ev |> rownames_to_column("model")) |> 
+  add_header_row(colwidths = 5,
+                 values = "Gatunki"
+                 ) |> 
+  theme_vanilla() |> 
+  flextable::align(i = 1, part = "header", align = "center")
+```
+
+```{r echo=FALSE}
+gatunki_ft
+```
+
+W przypadku modeli przeznaczonych do klasyfikacji gatunków malarstwa najlepiej sprawdziły się architektury DenNet121 i NASNetMobile trenowane od początku. Obie sieci osiągają bardzo zbliżone wyniki z niewielką przewagą na korzyść DenNet ze względu na funkcję straty.
+
+Najgorszą architekturą okzał się ResNet50 wcześniej przetrenowany na zbiorze "Imagenet" z odmrożonymi dwoma blokami konwolucyjnymi. Przypuszczać można że spowodowane jest to faktem iż charakter zadania jest bardziej abstrakcyjny niż klasy zawarte w zbiorze uczącym tej architektury.
+
+Ciekawe jest, że pierwsza architektura, będąca zarazem najprostrsza i ucząca się na niewielkim wycinku zbioru uczącego osiągneła lepsze wyniki niż struktury bardziej złożone.
+
+::: {#gatunki layout-ncol="2"}
+```{r echo=FALSE}
+metryki_gatunki_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_gatunki)) |> 
+  ggplot(aes(x=model,y=loss)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="blue") +
+  geom_text(aes(label=loss),vjust=-0.75) +
+  theme_minimal() +
+  ggtitle("Wartości funkcji straty dla Gatunków") +
+  xlab("Architektura modelu") +
+  ylab("Wartość funkcji straty")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r echo=FALSE}
+metryki_gatunki_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_gatunki)) |> 
+  ggplot(aes(x=model,y=accuracy)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="orange") +
+  geom_text(aes(label=accuracy),vjust=-0.75) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary Accuracy dla Gatunków") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary Accuracy")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r echo=FALSE}
+metryki_gatunki_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_gatunki)) |> 
+  ggplot(aes(x=model,y=top3)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="green") +
+  geom_text(aes(label=top3),vjust=-0.75) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary TOP 3 dla Gatunków") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary TOP3")
+```
+
+```{r echo=FALSE}
+metryki_gatunki_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_gatunki)) |> 
+  ggplot(aes(x=model,y=top5)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="red") +
+  geom_text(aes(label=top5),vjust=-0.75) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary TOP 5 dla Gatunków") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary TOP5")
+```
+:::
+
+Warto w tym przypadku nadmienić że miara top 5 przy 11 kategoriach nie jest aż tak dobrym odzwierciedleniem jakości klasyfkiacji. Najważniejsze dalej będzie accuracy oraz top 3.
+
+W przypadku miary top 3 dwa ostatnie modele osiągają zadowalające wyniki na poziomie \~80%
+
+### Style
+
+```{r echo=FALSE}
+rounded_style <- 3
+
+nazwy_modeli_style <- c("ResNet50","Arch3","DensNet121")
+
+metryki_style_ev <- data.frame("loss"=round(c(2.29541754722595,2.18937468528748,1.59250617027283),rounded_style)
+                               ,"accuracy"=round(c(0.274705529212952,0.370241791009903,0.49504029750824),rounded_style)
+                               ,"top3"=round(c(0.769512891769409,0.755240142345428,0.757775545120239),rounded_style)
+                               ,"top5"=round(c(0.892446458339691,0.879871964454651,0.880586206912994),rounded_style)
+                               , row.names = nazwy_modeli_style
+                               )
+```
+
+```{r echo=FALSE}
+# Style
+style_ft <- flextable(metryki_style_ev |> rownames_to_column("model")) |> 
+  add_header_row(colwidths = 5,
+                 values = "Style"
+                 ) |> 
+  theme_vanilla() |> 
+  flextable::align(i = 1, part = "header", align = "center")
+```
+
+```{r echo=FALSE}
+style_ft
+```
+
+W przypadku klasyfikacji styli malarskich wyniki są bardzo podobne do tych obserwowanych przy gatunkach. Najgorzej wypada wcześniej nauczona sieć ResNet50 osiągając bardzo niskie accuracy 27,5% i o dziwo najwyższe wyniki na miarach top 3 i top 5.
+
+Jeżeli chodzi o funkcje straty i accuracy zdecydowanie najlepiej wypadła architektura DensNet121 osiągając prawie 50% celności.
+
+::: {layout-ncol="2"}
+```{r echo=FALSE}
+metryki_style_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_style)) |> 
+  ggplot(aes(x=model,y=loss)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="blue") +
+  geom_text(aes(label=loss),vjust=-0.75) +
+  theme_minimal() +
+  ggtitle("Wartości funkcji straty dla Styli") +
+  xlab("Architektura modelu") +
+  ylab("Wartość funkcji straty")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r echo=FALSE}
+metryki_style_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_style)) |> 
+  ggplot(aes(x=model,y=accuracy)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="orange") +
+  geom_text(aes(label=accuracy),vjust=-0.75) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary Accuracy dla Styli") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary Accuracy")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r echo=FALSE}
+metryki_style_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_style)) |> 
+  ggplot(aes(x=model,y=top3)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="green") +
+  geom_text(aes(label=top3),vjust=-0.75) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary TOP 3 dla Styli") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary TOP3")
+```
+
+```{r echo=FALSE}
+metryki_style_ev |> rownames_to_column("model") |> mutate(model=factor(model, levels=nazwy_modeli_style)) |> 
+  ggplot(aes(x=model,y=top5)) +
+  geom_segment(aes(xend=model, yend=0)) +
+  geom_point(size=4, color="red") +
+  geom_text(aes(label=top5),vjust=-0.75) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("Wyniki miary TOP 5 dla Styli") +
+  xlab("Architektura modelu") +
+  ylab("Wartość miary TOP5")
+```
+:::
+
+W tym przypadku metryka top 5 jest znacznie bardziej miarodajna ze względu na fakt że tym razem zadanie ma 27 kategorii.
+
+Decydując się na model oparty na DensNet121 jesteśmy w stanie osiągnać zadowaljący wynik 75% przy metryce top 3.
+
+## Predykcja
+
+::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
+
+![Camille Corot "large sharecropping farm"](pic_1.png)
+
+$$
+\text{Gatunek: Pejzaż} \qquad \text{Styl: Realizm}
+$$
+
+```{r echo=FALSE}
+df1 <- data.frame("Gatunek"=c("Martwa natura","Malarstwo rodzajowe","Szkic","Pejzaż","Ilustracja"), "Prawdop%" = round(c(0.3014787,	0.23144290,	0.162296012,	0.0829725862,	0.0616343729)*100,2))
+
+df1 %>% 
+  flextable()
+```
+
+```{r echo=FALSE}
+df2 <- data.frame("Styl"=c("Minimalizm",	"Nowy realizm",	"Barok",	"Realizm",	"Kubizm"), "Prawdop%" = round(c(0.3458505,	3.434260e-01,	1.938799e-01,	8.759911e-02,	2.548585e-02)*100,2))
+
+df2 %>% 
+  flextable()
+```
+
+:::
+
+::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
+
+![Vincent Van Gogh "view on the singel in amsterdam"](pic_2.png)
+
+$$
+\text{Gatunek: Pejzaż miejski} \qquad \text{Styl: Realizm}
+$$
+
+```{r echo=FALSE}
+df1 <- data.frame("Gatunek"=c("Malarstwo nagie","Malarstwo rodzajowe","Ilustracja","Malarstwo abstrakcyjne","Malarstwo religijne"), "Prawdop%" = round(c(0.5129163,	0.27099425,	0.084545769,	0.0764303803,	0.0185091682)*100,2))
+
+df1 %>% 
+  flextable()
+```
+
+```{r echo=FALSE}
+df2 <- data.frame("Styl"=c("Minimalizm","Barok","Nowy realizm","Wczesny Renesans","Kubizm"), "Prawdop%" = round(c(0.9999808,	1.731725e-05,	5.771465e-07,	4.050526e-07,	3.406207e-07)*100,2))
+
+df2 %>% 
+  flextable()
+```
+
+:::
+
+::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
+
+![Katsushika Hokusai "Tsukada island in the Musashi province"](pic_3.png)
+
+$$
+\text{Gatunek: Gatunek nieznany} \qquad \text{Styl: Ukiyo-e}
+$$
+
+```{r echo=FALSE}
+df1 <- data.frame("Gatunek"=c("Szkic","Malarstwo rodzajowe","Ilustracja","Malarstwo religijne","Pejzaż"), "Prawdop%" = round(c(0.5766286,	0.19135216,	0.183803812,	0.0170532838,	0.0124427918)*100,2))
+
+df1 %>% 
+  flextable()
+```
+
+```{r echo=FALSE}
+df2 <- data.frame("Styl"=c("Minimalizm","Nowy realizm","Ekspresjonizm","Ukiyo-e","Kubizm"), "Prawdop%" = round(c(0.4655990,	1.994636e-01,	7.913978e-02,	7.855363e-02,	5.609258e-02)*100,2))
+
+df2 %>% 
+  flextable()
+```
+
+:::
+
+::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
+
+![Vasily Perov "sermon in a village"](pic_4.png)
+
+$$
+\text{Gatunek: Malarstwo rodzajowe} \qquad \text{Styl: Realizm}
+$$
+
+```{r echo=FALSE}
+df1 <- data.frame("Gatunek"=c("Malarstwo nagie","Pejzaż miejski","Ilustracja","Malarstwo rodzajowe","Martwa natura"), "Prawdop%" = round(c(0.9784755,	0.01745293,	0.002782246,	0.0008788634,	0.0003325894)*100,2))
+
+df1 %>% 
+  flextable()
+```
+
+```{r echo=FALSE}
+df2 <- data.frame("Styl"=c("Pop-art","Późny renesans","Ukiyo-e","Abstrakcjonizm ekspresyjny","Renesans północny"), "Prawdop%" = round(c(0.9354048,	3.744502e-02,	1.547584e-02,	5.230633e-03,	2.767635e-03)*100,2))
+
+df2 %>% 
+  flextable()
+```
+
+:::
+
+::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
+
+![Orest Kiprensky "athena"](pic_5.png)
+
+$$
+\text{Gatunek: Szkic} \qquad \text{Styl: Romantyzm}
+$$
+
+```{r echo=FALSE}
+df1 <- data.frame("Gatunek"=c("Pejzaż miejski","Malarstwo nagie","Malarstwo rodzajowe","Ilustracja","Martwa natura"), "Prawdop%" = round(c(0.8076832,	0.18257526,	0.007618638	,0.0018832893,	0.0001298179)*100,2))
+
+df1 %>% 
+  flextable()
+```
+
+```{r echo=FALSE}
+df2 <- data.frame("Styl"=c("Minimalizm","Realizm","Nowy realizm","Prymitywizm (Naïve art)","Renesans północny"), "Prawdop%" = round(c(0.9366344,	3.015659e-02,	1.676485e-02,	1.365539e-02,	9.752844e-04)*100,2))
+
+df2 %>% 
+  flextable()
+```
+
+:::
+
+## Linki do prac
+
+Budowa modeli: <https://www.kaggle.com/code/datachad/projekt-cv>
+
+Ewaluacja modeli: <https://www.kaggle.com/code/datachad/projekt-cv-eval>
+
+Repozytorium: <https://github.com/Chajf/Projekt_ComputerVision>
