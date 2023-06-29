@@ -1,11 +1,13 @@
 ---
-title: "Projekt_CV"
+title: "Projekt Automatyczna Analiza Obrazu"
 format:
   html:
     embed-resources: true
     toc: true
     toc-title: Spis treści
+    theme: pulse
 editor: visual
+author: "Michał Koziński i Patryk Marek"
 ---
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -16,43 +18,44 @@ library(flextable)
 
 ## Tematyka zadania
 
+<!-- modeli konwolucyjnych sieci neuronowych służących do -->
 Celem tego projektu jest zbudowanie modelu konwolucyjnej sieci neuronowej służącej do klasyfikacji dzieł sztuki ze względu na gatunek (11 etykiet) oraz stylów malarskich (27 etykiet).
 
-Zbiór danych którym posłużyliśmy się do trenowania modeli jest WikiArt zawierający ponad 84 tysiące różnych obrazów. Zbiór ten funkcjonuje w otwartym dostępie i jest darmowy do niekomercyjnego użytku.
+Zbiór danych którego użylismy do trenowania modeli jest `WikiArt`, zawiera on ponad 84 tysiące różnych obrazów. Zbiór ten funkcjonuje w otwartym dostępie i jest darmowy do niekomercyjnego użytku.
 
-Największą trudność zadania stanowi fakt że klasyfikacja obrazów jest zadaniem o charakterze abstrakcyjnym w zestawieniu z klasyfikacją przedmitów, ludzi lub zwirząt.
+Największą trudność zadania stanowi fakt, że klasyfikacja obrazów jest zadaniem o charakterze abstrakcyjnym w zestawieniu z klasyfikacją przedmitów, ludzi lub zwirząt.
 
-Dodatkowo specyfika zadania uniemożliwa wykorzystanie augmentacji (dla danego obrazu możliwy jest tylko oryginalny sposób reprezentacji zgodny z projektem artysty).
+Dodatkowo specyfika zadania uniemożliwa wykorzystanie augmentacji, wynika to z tego, że dla danego obrazu możliwy jest tylko oryginalny sposób reprezentacji, zgodny z projektem artysty.
 
 ## Klasyfikacja gatunku obrazu
 
 Każdy z obrazów posiada etykietę wskazującą na gatunek obrazu:
 
--   0 - Malarstwo abstrakcyjne
+-   0 - Malarstwo abstrakcyjne;
 
--   1 - Pejzaż miejski
+-   1 - Pejzaż miejski;
 
--   2 - Malarstwo rodzajowe
+-   2 - Malarstwo rodzajowe;
 
--   3 - Ilustracja
+-   3 - Ilustracja;
 
--   4 - Pejzaż
+-   4 - Pejzaż;
 
--   5 - Malarstwo nagie
+-   5 - Malarstwo nagie;
 
--   6 - Portret
+-   6 - Portret;
 
--   7 - Malarstwo religijne
+-   7 - Malarstwo religijne;
 
--   8 - Szkic
+-   8 - Szkic;
 
--   9 - Martwa natura
+-   9 - Martwa natura;
 
--   10 - Gatunek nieznany
+-   10 - Gatunek nieznany.
 
 ### Pierwszy projekt sieci
 
-Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta ponieważ składa się jedynie z 4 warstw konwolucyjnych i max poolingowych ze stosunkowo niewielką ilością filtrów.
+Pierwsza testowana przez nas architekutra sieci jest stosunkowo prosta, ponieważ składa się jedynie z 4 warstw konwolucyjnych i łączących (w tym wypadku - "max poolingowych") ze stosunkowo niewielką ilością filtrów.
 
 <details>
 
@@ -80,13 +83,13 @@ model <- keras_model_sequential() %>%
 model
 ```
 
-Szkolenie w każdej epoce odbywało się na 3200 obrazkach oraz walidacja była przeprowadzana na 1600 obrazkach.
+Szkolenie w każdej epoce odbywało się na 3200 obrazkach, a walidacja była przeprowadzana na 1600 obrazkach.
 
 Funkcją optymalizującą był "Adam" oraz zastosowane zostały następujące callbacki:
 
--   Zapisywanie modelu po każdej epoce
+-   Zapisywanie modelu po każdej epoce;
 
--   Przerwanie procesu uczenia jeżeli celność nie poprawi się na zbiorze walidacyjnym po 5 epokach
+-   Przerwanie procesu uczenia, jeżeli celność nie poprawi się na zbiorze walidacyjnym po 5 epokach.
 
 Przy tej strukturze sieć szkoliła się przez 28 epok, kończąc proces uczenia przez zastosowanie callbacków ze względu na brak poprawy celności na zbiorze walidacyjnym.
 
@@ -136,13 +139,13 @@ Funkcją optymalizującą również był "Adam" oraz zastosowane były te same c
 
 ![Druga sieć](plot_nn_2.png)
 
-Niestety także i przy tej architekturze nastąpiło zjawisko przeuczenia (nawet szybciej niż w przypadku sieci poprzedniej) osiągając accuracy maksymalnie na poziomie 0.45.
+Niestety, także i przy tej architekturze nastąpiło zjawisko przeuczenia (nawet szybciej niż w przypadku sieci poprzedniej) osiągając accuracy maksymalnie na poziomie 0.45.
 
 ### Trzeci projekt sieci
 
-Tym razem zdecydowaliśmy się użyć wcześniej przeszkolonej sieci ResNet jako części konwolucyjnej. Ze względu na ograniczone zasoby obliczeniowe użyliśmy wersji ResNet50.
+Tym razem zdecydowaliśmy się użyć wcześniej przeszkolonej sieci `ResNet` jako części konwolucyjnej. Ze względu na ograniczone zasoby obliczeniowe użyliśmy wersji `ResNet50`.
 
-ResNet50 to wariant modelu ResNet, który składa się z 48 warstw konwolucyjnych, jednej warstwy MaxPool i jednej warstwy Average Pool. ResNet został zaprojektowany w celu dodawania większej liczby warstw konwolucyjnych do sieci CNN, bez napotkania problemu zanikającego gradientu, za pomocą koncepcji połączeń rezydualnych.
+`ResNet50` to wariant modelu `ResNet`, który składa się z 48 warstw konwolucyjnych, jednej warstwy łączącej ("Max Pool") i jednej warstwy łączącej ("Average Pool"). `ResNet` został zaprojektowany w celu dodawania większej liczby warstw konwolucyjnych do sieci CNN, bez napotkania problemu zanikającego gradientu, za pomocą koncepcji połączeń rezydualnych.
 
 ```{r}
 conv_base <- application_resnet50(
@@ -183,7 +186,7 @@ Sieć uczona była na pełnym zbiorze treningowym przy użyciu optimizera "Adam"
 
 W tym przypadku zjawisko przeuczenia nastąpiło nawet szybiciej niż przy poprzednich architekturach.
 
-### Czwarty projekt sieci
+### Czwarty projekt sieci {#sec-czwarta_gatunki}
 
 <details>
 
@@ -219,29 +222,29 @@ model <- keras_model_sequential() %>%
 model
 ```
 
-Ze względu na fakt że pierwsza architektura pomimo najprostrzej struktury dawała relatywnie najlepsze wyniki zdecydowaliśmy się do niej wrócić z modyfikacjami w postaci regurlaryzacji oraz funkcji aktywacji w postaci "leaky reLU".
+Ze względu na fakt, że pierwsza architektura, pomimo najprostrzej struktury, dawała relatywnie najlepsze wyniki, zdecydowaliśmy się do niej wrócić, jednak tym razem zasotowaliśmy modyfikacje w postaci regurlaryzacji oraz funkcji aktywacji, w postaci "leaky reLU".
 
 ![Czwarta sieć](plot_nn_4.png)
 
 Podczas uczenia callbacki ustawione były na:
 
--   Zapisywanie modelu po każdej epoce
+-   Zapisywanie modelu po każdej epoce;
 
--   Przerwanie procesu uczenia jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 5 epokach
+-   Przerwanie procesu uczenia, jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 5 epokach;
 
--   Obniżenie learning rate jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 3 epokach
+-   Obniżenie learning rate, jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 3 epokach.
 
-W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej zarówno na zbiorze uczącym (\~67% celności) jak i walidacyjnym (\~47% celności).
+W porównaniu do wszystkich poprzednich struktur ta wypada najlepiej, zarówno na zbiorze uczącym (\~67% celności) jak i walidacyjnym (\~47% celności).
 
-Niestety pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać że za pierwszym razem poprawił celność) model jest przeuczony.
+Niestety, pomimo lepszych wyników uczenia oraz obniżenia learning rate (widać że za pierwszym razem poprawił celność), model jest przeuczony.
 
 ### Piąty projekt sieci
 
-Pomimo faktu, że modele które wykorzystywały wcześniej przetrenowaną sieć konwolucyjną ResNet50, okazały się być gorsze nawet od prostych struktur. Zdecydowaliśmy się użyć nowszej struktury DensNet121, wykorzystującej bardziej zaawansowane połączenia resztowe.
+Pomimo faktu, że modele, które wykorzystywały wcześniej przetrenowaną sieć konwolucyjną `ResNet50`, okazały się być gorsze nawet od prostych struktur. Zdecydowaliśmy się użyć nowszej struktury `DenseNet121`, wykorzystującej bardziej zaawansowane połączenia resztowe.
 
 ![ResNet vs DensNet](densnet_vs_resnet.png)
 
-Zdecydowaliśmy się na DensNet121 z tego względu iż jest to najmniejsza struktura z architektur DensNet co jest ważne przy ograniczonych zasobach sprzętowych.
+Zdecydowaliśmy się na `DenseNet121` z tego względu, że jest to najmniejsza struktura z architektur `DenseNet`, co jest ważne przy ograniczonych zasobach sprzętowych.
 
 Tym razem uznaliśmy jednak, że abstrakcyjny charakter zadania wymaga przeszkolenia całej struktury na nowo, ponieważ wzorce wyuczone na zbiorze "Imagenet" mogą nie dawać zadowalających wyników.
 
@@ -258,11 +261,11 @@ model <- conv_base
 
 ![Piąta sieć](plot_nn_5.png)
 
-W tym przypadku architektura ta okazała się być najlepsza z wszystkich dotychczasowych osiągając blisko 60% na zbiorze walidacyjnym.
+Architektura ta okazała się być najlepsza ze wszystkich dotychczasowych, osiągając blisko 60% na zbiorze walidacyjnym.
 
 ### Szósty projekt sieci
 
-W tym podejściu postanowiliśmy zastosować predefiniowaną sieć NASNetMobile ze względu na jej niewielki rozmiar oraz fakt że jak na razie gotowe architektury, uczone od początku (losowo inicjalizowane wagi) dawały najlepsze wyniki.
+W tym podejściu postanowiliśmy zastosować predefiniowaną sieć `NASNetMobile`, ze względu na jej niewielki rozmiar oraz fakt, że jak na razie gotowe architektury, uczone od początku (losowo inicjalizowane wagi), dawały najlepsze wyniki.
 
 ```{r}
 conv_base <- application_nasnetmobile(
@@ -277,69 +280,69 @@ model <- conv_base
 
 ![Szósta siec](plot_nn_6.png)
 
-Wyniki okazały się być nieco gorsze od poprzedniej architektury oparej na DenNet121 poniważ jest to około 55% celności na zbiorze walidacyjnym. Dodatkowo w tym przypadku efekt przeuczenia jest mniejszy niż w poprzedniej architekturze więc daje to potencjał żeby jeszcze ją poprawić.
+Wyniki okazały się być nieco gorsze od poprzedniej architektury oparej na `DenseNet121`, poniważ jest to około 55% celności na zbiorze walidacyjnym. Dodatkowo w tym przypadku efekt przeuczenia jest mniejszy niż przy poprzedniej architekturze, daje to więc potencjał do poprawy.
 
 ## Klasyfikacja stylu obrazu
 
--   0 - Abstrakcjonizm ekspresyjny
+-   0 - Abstrakcjonizm ekspresyjny;
 
--   1 - Malowidło akcji
+-   1 - Malowidło akcji;
 
--   2 - Kubizm anlityczny
+-   2 - Kubizm anlityczny;
 
--   3 - Secesja
+-   3 - Secesja;
 
--   4 - Barok
+-   4 - Barok;
 
--   5 - Malarstwo barwnych płaszczyzn
+-   5 - Malarstwo barwnych płaszczyzn;
 
--   6 - Realizm współczesny
+-   6 - Realizm współczesny;
 
--   7 - Kubizm
+-   7 - Kubizm;
 
--   8 - Wczesny Renesans
+-   8 - Wczesny Renesans;
 
--   9 - Ekspresjonizm
+-   9 - Ekspresjonizm;
 
--   10 - Fowizm
+-   10 - Fowizm;
 
--   11 - Późny renesans
+-   11 - Późny renesans;
 
--   12 - Impresjonizm
+-   12 - Impresjonizm;
 
--   13 - Manieryzm późnego renesansu
+-   13 - Manieryzm późnego renesansu;
 
--   14 - Minimalizm
+-   14 - Minimalizm;
 
--   15 - Prymitywizm (Naïve art)
+-   15 - Prymitywizm (Naïve art);
 
--   16 - Nowy realizm
+-   16 - Nowy realizm;
 
--   17 - Renesans północny
+-   17 - Renesans północny;
 
--   18 - Puentylizm
+-   18 - Puentylizm;
 
--   19 - Pop-art
+-   19 - Pop-art;
 
--   20 - Postimpresjonizm
+-   20 - Postimpresjonizm;
 
--   21 - Realizm
+-   21 - Realizm;
 
--   22 - Rokoko
+-   22 - Rokoko;
 
--   23 - Romantyzm
+-   23 - Romantyzm;
 
--   24 - Symbolizm
+-   24 - Symbolizm;
 
--   25 - Kubizm syntetyczny
+-   25 - Kubizm syntetyczny;
 
--   26 - Ukiyo-e
+-   26 - Ukiyo-e;
 
--   27 - Styl nieznany
+-   27 - Styl nieznany.
 
 ### Pierwszy projekt sieci
 
-Pierwszą architekturę sieci do rozpoznawania styli malarstwa postanowiliśmy oprzeć o wcześniej wyuczoną sieć ResNet50 z odmrożonymi dwoma blokami konwolucji.
+Pierwszą architekturę sieci do rozpoznawania styli malarstwa postanowiliśmy oprzeć o wcześniej wyuczoną sieć `ResNet50` z odmrożonymi dwoma blokami konwolucji.
 
 W tym przypadku zdecydowaliśmy się na mniejszy blok gęsty względem architektury do rozpoznawania gatunków.
 
@@ -369,19 +372,27 @@ model
 
 Podczas uczenia callbacki ustawione były na:
 
--   Zapisywanie modelu po każdej epoce
+-   Zapisywanie modelu po każdej epoce;
 
--   Przerwanie procesu uczenia jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 8 epokach
+-   Przerwanie procesu uczenia, jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 8 epokach;
 
--   Obniżenie learning rate jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 4 epokach
+-   Obniżenie learning rate, jeżeli funkcja straty nie poprawi się na zbiorze walidacyjnym po 4 epokach.
 
-Niestety proces uczenia został przerwany ze względu na limity platformy kaggle (kompilacja notatnika osiągnęła 12h) z tego względu dysponujemy jedynie logami dla rezultatów 27 epoki
+Niestety, proces uczenia został przerwany ze względu na limity platformy *kaggle* (kompilacja notatnika osiągnęła 12h), z tego względu dysponujemy jedynie logami dla rezultatów 27 epoki:
 
-loss: 2.1323 - acc: 0.3101 - val_loss: 2.2895 - val_acc: 0.2795 - lr: 1.0000e-06
+loss: 2.1323;
+
+acc: 0.3101;
+
+val_loss: 2.2895;
+
+val_acc: 0.2795;
+
+lr: 1.0000e-06.
 
 ### Drugi projekt sieci
 
-Jako drugą architekturę sieci postanowiliśmy wykorzystać czwartą architekturę zaproponowaną do klasyfikacji gatunków ze względu na fakt że osiągała ona najlepsze wyniki.
+Jako następną architekturę sieci postanowliśmy skorzystać z używanej już wcześniej architektury, która została wykorzystana jako czwarta w zadniu klasyfikacji gatunków (@sec-czwarta_gatunki), do czego skłoniły nas osiągane przez nią wyniki.
 
 <details>
 
@@ -419,11 +430,11 @@ model
 
 ![Druga sieć](plot_nn_style_1.png)
 
-Pomimo faktu, że i przy tej strukturze sieci następuje przeuczenie osiąga ona taki sam wynik na zbiorze uczącym po 3 epokach co struktura oparta na ResNet50 osiągnęła po 27.
+Pomimo faktu, że i przy tej strukturze sieci następuje przeuczenie, osiąga ona taki sam wynik, na zbiorze uczącym po 3 epokach, co struktura oparta na `ResNet50` osiągnęła po 27 epokach.
 
 ### Trzeci projekt sieci
 
-Zachęceni wynikami uzyskanymi na gatunkach z szkolonej od początku architektury DensNet121 postawnowiliśmy użyć jej również do klasyfikacji styli.
+Wyniki uzyskane przy klasyfikacji gatunków, przez szkoloną od początku architekturę `DenseNet121`, skłoniły nas do użycia jej w zadaniu klasyfikacji stylów.
 
 ```{r}
 conv_base <- application_densenet121(
@@ -438,7 +449,7 @@ model <- conv_base
 
 ![Trzecia sieć](plot_nn_style_2.png)
 
-Decyzja ta okazała się być trafiona. Po raz pierwszy udało się osiągnąć celnośc powyżej 50% (\~52%).
+Decyzja ta okazała się być trafiona, po raz pierwszy udało się osiągnąć celnośc powyżej 50% (\~52%).
 
 ## Ewaluacja modeli
 
@@ -471,11 +482,11 @@ gatunki_ft <- flextable(metryki_gatunki_ev |> rownames_to_column("model")) |>
 gatunki_ft
 ```
 
-W przypadku modeli przeznaczonych do klasyfikacji gatunków malarstwa najlepiej sprawdziły się architektury DenNet121 i NASNetMobile trenowane od początku. Obie sieci osiągają bardzo zbliżone wyniki z niewielką przewagą na korzyść DenNet ze względu na funkcję straty.
+W przypadku modeli przeznaczonych do klasyfikacji gatunków malarstwa, najlepiej sprawdziły się architektury `DenseNet121` i `NASNetMobile` trenowane od początku. Obie sieci osiągają bardzo zbliżone wyniki z niewielką przewagą na korzyść architektury `DenseNet`, ze względu na funkcję straty.
 
-Najgorszą architekturą okzał się ResNet50 wcześniej przetrenowany na zbiorze "Imagenet" z odmrożonymi dwoma blokami konwolucyjnymi. Przypuszczać można że spowodowane jest to faktem iż charakter zadania jest bardziej abstrakcyjny niż klasy zawarte w zbiorze uczącym tej architektury.
+Najgorszą architekturą okzał się `ResNet50`, przetrenowany wcześniej na zbiorze "Imagenet", z odmrożonymi dwoma blokami konwolucyjnymi. Przypuszczać można, że spowodowane jest to faktem, iż charakter zadania jest bardziej abstrakcyjny niż klasy zawarte w zbiorze uczącym tej architektury.
 
-Ciekawe jest, że pierwsza architektura, będąca zarazem najprostrsza i ucząca się na niewielkim wycinku zbioru uczącego osiągneła lepsze wyniki niż struktury bardziej złożone.
+Warto zauważyć, że pierwsza architektura, będąca zarazem najprostrszą i ucząca się na niewielkim wycinku zbioru uczącego, osiągneła lepsze wyniki, niż struktury bardziej złożone.
 
 ::: {#gatunki layout-ncol="2"}
 ```{r echo=FALSE}
@@ -534,9 +545,9 @@ metryki_gatunki_ev |> rownames_to_column("model") |> mutate(model=factor(model, 
 ```
 :::
 
-Warto w tym przypadku nadmienić że miara top 5 przy 11 kategoriach nie jest aż tak dobrym odzwierciedleniem jakości klasyfkiacji. Najważniejsze dalej będzie accuracy oraz top 3.
+Warto w tym przypadku nadmienićm że miara `top 5` przy 11 kategoriach nie jest aż tak dobrym odzwierciedleniem jakości klasyfkiacji. Najważniejsze dalej będzie accuracy oraz `top 3`.
 
-W przypadku miary top 3 dwa ostatnie modele osiągają zadowalające wyniki na poziomie \~80%
+W przypadku miary `top 3` dwa ostatnie modele osiągają zadowalające wyniki na poziomie \~80%
 
 ### Style
 
@@ -567,9 +578,9 @@ style_ft <- flextable(metryki_style_ev |> rownames_to_column("model")) |>
 style_ft
 ```
 
-W przypadku klasyfikacji styli malarskich wyniki są bardzo podobne do tych obserwowanych przy gatunkach. Najgorzej wypada wcześniej nauczona sieć ResNet50 osiągając bardzo niskie accuracy 27,5% i o dziwo najwyższe wyniki na miarach top 3 i top 5.
+W przypadku klasyfikacji styli malarskich, wyniki są bardzo podobne do tych obserwowanych przy gatunkach. Najgorzej wypada wcześniej nauczona sieć `ResNet50`, osiągając bardzo niskie accuracy 27,5% i o dziwo najwyższe wyniki na miarach `top 3` i `top 5`.
 
-Jeżeli chodzi o funkcje straty i accuracy zdecydowanie najlepiej wypadła architektura DensNet121 osiągając prawie 50% celności.
+Ze względu na funkcję straty i accuracy, zdecydowanie najlepiej wypadła architektura `DenseNet121` osiągając prawie 50% celności.
 
 ::: {layout-ncol="2"}
 ```{r echo=FALSE}
@@ -628,14 +639,13 @@ metryki_style_ev |> rownames_to_column("model") |> mutate(model=factor(model, le
 ```
 :::
 
-W tym przypadku metryka top 5 jest znacznie bardziej miarodajna ze względu na fakt że tym razem zadanie ma 27 kategorii.
+W tym przypadku metryka `top 5` jest znacznie bardziej miarodajna, ze względu na fakt, że tym razem zadanie ma 27 kategorii.
 
-Decydując się na model oparty na DensNet121 jesteśmy w stanie osiągnać zadowaljący wynik 75% przy metryce top 3.
+Decydując się na model oparty na `DenseNet121`, jesteśmy w stanie osiągnać zadowaljący wynik 75% przy metryce `top 3`.
 
 ## Predykcja
 
 ::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
-
 ![Camille Corot "large sharecropping farm"](pic_1.png)
 
 $$
@@ -655,11 +665,9 @@ df2 <- data.frame("Styl"=c("Minimalizm",	"Nowy realizm",	"Barok",	"Realizm",	"Ku
 df2 %>% 
   flextable()
 ```
-
 :::
 
 ::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
-
 ![Vincent Van Gogh "view on the singel in amsterdam"](pic_2.png)
 
 $$
@@ -679,11 +687,9 @@ df2 <- data.frame("Styl"=c("Minimalizm","Barok","Nowy realizm","Wczesny Renesans
 df2 %>% 
   flextable()
 ```
-
 :::
 
 ::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
-
 ![Katsushika Hokusai "Tsukada island in the Musashi province"](pic_3.png)
 
 $$
@@ -703,11 +709,9 @@ df2 <- data.frame("Styl"=c("Minimalizm","Nowy realizm","Ekspresjonizm","Ukiyo-e"
 df2 %>% 
   flextable()
 ```
-
 :::
 
 ::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
-
 ![Vasily Perov "sermon in a village"](pic_4.png)
 
 $$
@@ -727,11 +731,9 @@ df2 <- data.frame("Styl"=c("Pop-art","Późny renesans","Ukiyo-e","Abstrakcjoniz
 df2 %>% 
   flextable()
 ```
-
 :::
 
 ::: {layout="[[1],[1], [1,1]]" layout-valign="center"}
-
 ![Orest Kiprensky "athena"](pic_5.png)
 
 $$
@@ -751,13 +753,12 @@ df2 <- data.frame("Styl"=c("Minimalizm","Realizm","Nowy realizm","Prymitywizm (N
 df2 %>% 
   flextable()
 ```
-
 :::
 
 ## Linki do prac
 
-Budowa modeli: <https://www.kaggle.com/code/datachad/projekt-cv>
+Budowa modeli: <https://www.kaggle.com/code/datachad/projekt-cv>.
 
-Ewaluacja modeli: <https://www.kaggle.com/code/datachad/projekt-cv-eval>
+Ewaluacja modeli: <https://www.kaggle.com/code/datachad/projekt-cv-eval>.
 
-Repozytorium: <https://github.com/Chajf/Projekt_ComputerVision>
+Repozytorium: <https://github.com/Chajf/Projekt_ComputerVision>.
